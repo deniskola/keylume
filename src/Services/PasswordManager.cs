@@ -1,4 +1,6 @@
 ﻿using Keylume.Models;
+using System.Net;
+using System.Text.Json;
 
 namespace Keylume.Services
 {
@@ -8,13 +10,29 @@ namespace Keylume.Services
         private readonly EncryptionService encryptionService;
         private List<Credentials> credentials;
 
-        public PasswordManager(string filePath, EncryptionService encryptionService, List<Credentials> credentials)
+        public PasswordManager(EncryptionService encryptionService, string filePath)
         {
             this.filePath = filePath;
             this.encryptionService = encryptionService;
-            this.credentials = credentials;
+            this.credentials = LoadCredentials();
         }
 
+        private List<Credentials> LoadCredentials()
+        {
+            if (!File.Exists(filePath)) return new List<Credentials>();
+
+            try
+            {
+                string encryptedJson = File.ReadAllText(filePath);
+                string decryptedJson = encryptionService.Decrypt(encryptedJson);
+                return JsonSerializer.Deserialize<List<Credentials>>(decryptedJson) ?? new List<Credentials>();
+            }
+            catch
+            {
+                return new List<Credentials>();
+            }
+        }
+        
         public void StorePassword(string identifier, string username, string password, string notes = "")
         {
             credentials.Add(new Credentials(identifier, username, encryptionService.Decrypt(password), notes));
