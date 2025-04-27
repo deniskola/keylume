@@ -37,12 +37,19 @@ namespace Keylume.Services
         {
             string json = JsonSerializer.Serialize(credentials);
             string encryptedJson = encryptionService.Encrypt(json);
+            string directoryPath = Path.GetDirectoryName(filePath)!;
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
             File.WriteAllText(filePath, encryptedJson);
         }
 
         public void StorePassword(string identifier, string username, string password, string notes = "")
         {
-            credentials.Add(new Credentials(identifier, username, encryptionService.Decrypt(password), notes));
+            credentials.Add(new Credentials(identifier, username, encryptionService.Encrypt(password), notes));
             SaveCredentials();
         }
 
